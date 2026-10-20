@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">PuranBazar</string>
+    <string name="app_full_name">PuranBazar - Used Goods Marketplace</string>
+    <string name="offline_title">No Internet Connection</string>
+    <string name="offline_desc">Please check your mobile data or Wi-Fi connection and try again.</string>
+    <string name="btn_retry">Try Again</string>
+    <string name="exit_confirm_title">Exit App?</string>
+    <string name="exit_confirm_msg">Are you sure you want to exit PuranBazar app?</string>
+    <string name="btn_yes">Yes (Exit)</string>
+    <string name="btn_no">Cancel</string>
+    <string name="action_lang_bn">বাংলা</string>
+    <string name="action_lang_en">English</string>
+    <string name="toast_lang_changed">Language changed to English</string>
+</resources>

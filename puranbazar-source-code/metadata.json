@@ -1,0 +1,6 @@
+{
+  "name": "পুরানবাজার (PuranBazar)",
+  "description": "ব্যবহৃত পণ্য কিনুন, বিক্রি করুন সহজে - বাংলাদেশের নির্ভরযোগ্য অনলাইন সেকেন্ডহ্যান্ড মার্কেটপ্লেস।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

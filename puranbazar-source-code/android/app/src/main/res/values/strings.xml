@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">পুরানবাজার</string>
+    <string name="app_full_name">পুরানবাজার - সেকেন্ডহ্যান্ড মার্কেটপ্লেস</string>
+    <string name="offline_title">ইন্টারনেট সংযোগ নেই</string>
+    <string name="offline_desc">আপনার মোবাইল ডেটা অথবা ওয়াই-ফাই সংযোগ চেক করে পুনরায় চেষ্টা করুন।</string>
+    <string name="btn_retry">পুনরায় চেষ্টা করুন</string>
+    <string name="exit_confirm_title">অ্যাপ বন্ধ করবেন?</string>
+    <string name="exit_confirm_msg">আপনি কি পুরানবাজার অ্যাপ থেকে বের হতে চান?</string>
+    <string name="btn_yes">হ্যাঁ</string>
+    <string name="btn_no">না</string>
+    <string name="action_lang_bn">বাংলা</string>
+    <string name="action_lang_en">English</string>
+    <string name="toast_lang_changed">ভাষা বাংলায় পরিবর্তিত হয়েছে</string>
+</resources>

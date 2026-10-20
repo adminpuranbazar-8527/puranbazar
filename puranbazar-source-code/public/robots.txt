@@ -1,0 +1,7 @@
+# robots.txt for PuranBazar Marketplace
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /vault
+
+Sitemap: https://puranbazar.com/sitemap.xml
