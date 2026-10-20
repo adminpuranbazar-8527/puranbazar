@@ -28,6 +28,15 @@ import {
   RevenueItem, AdSenseStats, PayoutAccount, WithdrawalRequest, UserProfile,
   GoogleAdSenseConfig, PayoutPolicySettings
 } from './types';
+import { 
+  testFirestoreConnection, 
+  subscribeToCloudAds, 
+  saveAdToCloud, 
+  deleteAdFromCloud, 
+  saveReportToCloud, 
+  savePaymentToCloud,
+  seedInitialAdsToCloud 
+} from './services/firebase';
 import { INITIAL_ADS, INITIAL_PENDING_ADS } from './data/mockAds';
 import { useTheme } from './hooks/useTheme';
 import { 
@@ -368,6 +377,37 @@ export default function App() {
     }
   }, [ads]);
 
+  // Real-time Cloud Synchronization (Firebase Firestore)
+  // Ensures ads posted on any device (PC, Mobile, etc.) are immediately visible across all devices globally
+  useEffect(() => {
+    testFirestoreConnection();
+
+    // Subscribe to real-time cloud updates
+    const unsubscribe = subscribeToCloudAds((cloudAds) => {
+      if (cloudAds && cloudAds.length > 0) {
+        setAds((prev) => {
+          const map = new Map<string, Ad>();
+          // Cloud ads have primary source of truth
+          cloudAds.forEach((a) => map.set(a.id, a));
+          // Preserve any locally posted ads if still syncing
+          prev.forEach((a) => {
+            if (!map.has(a.id)) {
+              map.set(a.id, a);
+            }
+          });
+          return Array.from(map.values());
+        });
+      } else {
+        // If Firestore collection is empty, seed initial marketplace ads
+        seedInitialAdsToCloud([...INITIAL_ADS, ...INITIAL_PENDING_ADS]);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_REPORTS, JSON.stringify(reports));
@@ -653,6 +693,7 @@ export default function App() {
 
   const handleUserDeleteAd = (adId: string) => {
     setAds((prev) => prev.filter((a) => a.id !== adId));
+    deleteAdFromCloud(adId);
   };
 
   const handleOpenBoostAd = (ad: Ad) => {
@@ -661,10 +702,16 @@ export default function App() {
   };
 
   const handleBoostAdSuccess = (adId: string, newTier: 'featured' | 'premium' | 'top', payment: FeaturedPayment) => {
-    setAds((prev) =>
-      prev.map((a) => (a.id === adId ? { ...a, featured_tier: newTier } : a))
-    );
+    const target = ads.find((a) => a.id === adId);
+    if (target) {
+      const updated = { ...target, featured_tier: newTier };
+      setAds((prev) =>
+        prev.map((a) => (a.id === adId ? updated : a))
+      );
+      saveAdToCloud(updated);
+    }
     setPayments((prev) => [payment, ...prev]);
+    savePaymentToCloud(payment);
 
     // Register into official platform revenue items
     const revItem: RevenueItem = {
@@ -702,8 +749,12 @@ export default function App() {
     };
 
     setAds((prev) => [sanitizedAd, ...prev]);
+    // Instantly sync to Firestore so all visitors across all computers & mobile devices see it
+    saveAdToCloud(sanitizedAd);
+
     if (payment) {
       setPayments((prev) => [payment, ...prev]);
+      savePaymentToCloud(payment);
 
       // Automatically register payment in revenue items
       const revItem: RevenueItem = {
@@ -838,6 +889,7 @@ export default function App() {
       } catch (e) {
         console.error(e);
       }
+      data.ads.forEach((ad) => saveAdToCloud(ad));
     }
     if (data.users && Array.isArray(data.users)) {
       setRegisteredUsers(data.users);
@@ -890,37 +942,45 @@ export default function App() {
 
   const handleApproveAd = (adId: string) => {
     const targetAd = ads.find((a) => a.id === adId);
-    setAds((prev) =>
-      prev.map((item) => (item.id === adId ? { ...item, status: 'approved' } : item))
-    );
+    if (targetAd) {
+      const updated = { ...targetAd, status: 'approved' as const };
+      setAds((prev) =>
+        prev.map((item) => (item.id === adId ? updated : item))
+      );
+      saveAdToCloud(updated);
+    }
     addAuditLog('AD_APPROVED', targetAd?.title || adId, `অনুমোদনকারী: ${currentStaff?.name}`, 'success');
   };
 
   const handleRejectAd = (adId: string) => {
     const targetAd = ads.find((a) => a.id === adId);
-    setAds((prev) =>
-      prev.map((item) => (item.id === adId ? { ...item, status: 'rejected' } : item))
-    );
+    if (targetAd) {
+      const updated = { ...targetAd, status: 'rejected' as const };
+      setAds((prev) =>
+        prev.map((item) => (item.id === adId ? updated : item))
+      );
+      saveAdToCloud(updated);
+    }
     addAuditLog('AD_REJECTED', targetAd?.title || adId, `বাতিলকারী: ${currentStaff?.name}`, 'warning');
   };
 
   const handleDeleteAd = (adId: string) => {
     const targetAd = ads.find((a) => a.id === adId);
     setAds((prev) => prev.filter((item) => item.id !== adId));
+    deleteAdFromCloud(adId);
     addAuditLog('AD_DELETED', targetAd?.title || adId, `বিজ্ঞাপন স্থায়ীভাবে মুছে ফেলেছেন ${currentStaff?.name}`, 'blocked');
   };
 
   const handleToggleFeatureAd = (adId: string) => {
     const targetAd = ads.find((a) => a.id === adId);
-    setAds((prev) =>
-      prev.map((item) => {
-        if (item.id === adId) {
-          const newTier = item.featured_tier === 'none' ? 'featured' : 'none';
-          return { ...item, featured_tier: newTier };
-        }
-        return item;
-      })
-    );
+    if (targetAd) {
+      const newTier = targetAd.featured_tier === 'none' ? 'featured' as const : 'none' as const;
+      const updated = { ...targetAd, featured_tier: newTier };
+      setAds((prev) =>
+        prev.map((item) => (item.id === adId ? updated : item))
+      );
+      saveAdToCloud(updated);
+    }
     addAuditLog('FEATURED_TOGGLED', targetAd?.title || adId, `ফিচার্ড স্ট্যাটাস পরিবর্তন`, 'success');
   };
 
@@ -932,6 +992,7 @@ export default function App() {
       reporter_phone: sanitizeInput(newReport.reporter_phone),
     };
     setReports((prev) => [sanitizedReport, ...prev]);
+    saveReportToCloud(sanitizedReport);
     addAuditLog('USER_REPORT_SUBMITTED', sanitizedReport.ad_title, `কারণ: ${sanitizedReport.reason}`, 'warning');
   };
 

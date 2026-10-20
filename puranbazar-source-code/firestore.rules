@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    function isValidAd(data) {
+      return data.title is string && data.title.size() >= 2 && data.title.size() <= 200
+        && data.price is number && data.price >= 0
+        && data.category_id is string && data.category_id.size() > 0
+        && data.seller_name is string && data.seller_name.size() > 0
+        && data.seller_phone is string && data.seller_phone.size() > 0;
+    }
+
+    // Advertisements collection: Publicly readable by all visitors on any device
+    match /ads/{adId} {
+      allow read: if true;
+      allow create: if isValidId(adId) && isValidAd(request.resource.data);
+      allow update: if isValidId(adId);
+      allow delete: if isValidId(adId);
+    }
+
+    // Reports collection: Anyone can report an ad, moderators can manage
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if isValidId(reportId) && request.resource.data.ad_id is string;
+      allow update, delete: if isValidId(reportId);
+    }
+
+    // Payments collection: Boosting payment records
+    match /payments/{paymentId} {
+      allow read: if true;
+      allow create: if isValidId(paymentId) && request.resource.data.amount is number;
+      allow update, delete: if isValidId(paymentId);
+    }
+
+    // Connection testing endpoint for healthchecks
+    match /test/{testId} {
+      allow read, write: if true;
+    }
+  }
+}

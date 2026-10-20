@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "Ad": {
+      "title": "Advertisement",
+      "description": "Classified marketplace product or item advertisement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "negotiable": { "type": "boolean" },
+        "condition": { "type": "string" },
+        "category_id": { "type": "string" },
+        "subcategory": { "type": "string" },
+        "division": { "type": "string" },
+        "district": { "type": "string" },
+        "upazila": { "type": "string" },
+        "seller_name": { "type": "string" },
+        "seller_phone": { "type": "string" },
+        "seller_email": { "type": "string" },
+        "status": { "type": "string", "enum": ["approved", "pending", "rejected"] },
+        "featured_tier": { "type": "string", "enum": ["none", "featured", "top", "urgent"] },
+        "views": { "type": "number" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "title", "price", "category_id", "division", "district", "seller_name", "seller_phone", "status"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Featured ad boosting payment record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ad_id": { "type": "string" },
+        "ad_title": { "type": "string" },
+        "package_name": { "type": "string" },
+        "amount": { "type": "number" },
+        "method": { "type": "string" },
+        "trx_id": { "type": "string" },
+        "created_at": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "ad_id", "amount", "method", "status"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Safety report submitted by visitors",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ad_id": { "type": "string" },
+        "ad_title": { "type": "string" },
+        "reporter_name": { "type": "string" },
+        "reporter_phone": { "type": "string" },
+        "reason": { "type": "string" },
+        "details": { "type": "string" },
+        "created_at": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "ad_id", "reason", "details", "created_at"]
+    }
+  },
+  "firestore": {
+    "/ads/{adId}": {
+      "schema": "Ad",
+      "description": "Public classified advertisements visible across all visitors and devices"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Verified transaction and boost records"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Community fraud and safety reports for moderator review"
+    }
+  }
+}

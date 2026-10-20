@@ -8,6 +8,7 @@ import {
   Ad, UserProfile, FeaturedPayment, AdReport, GoogleAdSenseConfig, 
   SecuritySettings, StaffMember, PayoutAccount, PayoutPolicySettings 
 } from '../types';
+import { saveAdToCloud } from '../services/firebase';
 import { Language, formatNumber } from '../utils/i18n';
 
 interface DataBackupVaultSectionProps {
@@ -65,6 +66,27 @@ export const DataBackupVaultSection: React.FC<DataBackupVaultSectionProps> = ({
   const [restoreSuccess, setRestoreSuccess] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+
+  // Sync all current advertisements to the centralized Google Cloud Firestore database
+  const handleSyncAllAdsToCloud = async () => {
+    setIsCloudSyncing(true);
+    try {
+      for (const ad of ads) {
+        await saveAdToCloud(ad);
+      }
+      setDownloadSuccess(
+        isEn
+          ? 'All ads successfully synced to Firebase Cloud Firestore! Now visible across all devices.'
+          : 'সকল বিজ্ঞাপন সফলভাবে গুগল ক্লাউড ডাটাবেজে সিঙ্ক হয়েছে! এখন মোবাইল, কম্পিউটার বা যেকোনো ডিভাইসে সরাসরি দৃশ্যমান হবে।'
+      );
+      setTimeout(() => setDownloadSuccess(null), 5000);
+    } catch (err: any) {
+      setRestoreError(isEn ? 'Cloud sync failed.' : 'ক্লাউড সিঙ্ক করতে সমস্যা হয়েছে।');
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
 
   // Calculate ad media statistics
   const totalImages = ads.reduce((acc, ad) => acc + (ad.images?.length || 0), 0);
@@ -544,6 +566,50 @@ export const DataBackupVaultSection: React.FC<DataBackupVaultSectionProps> = ({
               className="py-2.5 px-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer"
             >
               {isEn ? 'Quick Save' : 'কুইক সেভ'}
+            </button>
+          </div>
+        </div>
+
+        {/* Operation 5: Direct Google Cloud Firestore Live Sync */}
+        <div className="p-5 rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/40 dark:from-indigo-950/40 dark:via-slate-800 dark:to-slate-800 space-y-4 shadow-xs md:col-span-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Cloud className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                    {isEn ? 'Google Firebase Firestore Multi-Device Sync' : 'গুগল ক্লাউড ডাটাবেজ (Firestore) মাল্টি-ডিভাইস সিঙ্ক'}
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white shadow-xs">
+                    {isEn ? 'Realtime Sync Active' : 'রিয়েলটাইম সিঙ্ক সক্রিয়'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                  {isEn
+                    ? 'Synchronizes all ads to Google Firestore so that ads posted from PC, Mobile, or any browser load automatically on all other devices in real-time.'
+                    : 'কম্পিউটার বা মোবাইল থেকে যেকোনো ভিজিটর বিজ্ঞাপন দিলে তা সাথে সাথে গুগলের কেন্দ্রীয় ক্লাউড ডাটাবেজে জমা হবে এবং অন্য সকল ডিভাইসে স্বয়ংক্রিয়ভাবে লোড হবে।'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSyncAllAdsToCloud}
+              disabled={isCloudSyncing}
+              className="py-2.5 px-5 bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              {isCloudSyncing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>{isEn ? 'Syncing to Cloud...' : 'ক্লাউডে সিঙ্ক হচ্ছে...'}</span>
+                </>
+              ) : (
+                <>
+                  <Cloud className="w-4 h-4" />
+                  <span>{isEn ? 'Sync All Ads to Cloud' : 'সকল বিজ্ঞাপন ক্লাউডে সিঙ্ক করুন'}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
