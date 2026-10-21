@@ -96,19 +96,6 @@ npm run bundle
 
 ---
 
-## 🔐 এডমিন ও মডারেটর লগইন তথ্য (Default Staff Credentials)
-
-| ভূমিকা (Role) | ইমেইল | ডিফল্ট পাসওয়ার্ড | সিকিউরিটি পিন |
-|---|---|---|---|
-| **সুপার এডমিন (Super Admin)** | `admin@puranbazar.com` | `Admin@2026` | `998877` |
-| **অপারেশনস এডমিন (Admin)** | `tanzil@puranbazar.com` | `Admin@123` | `554433` |
-| **কন্টেন্ট মডারেটর** | `moderator@puranbazar.com` | `Mod@2026` | `112233` |
-| **সাপোর্ট ও সিকিউরিটি অফিসার** | `safety@puranbazar.com` | `Safe@2026` | `332211` |
-
-*এডমিন পোর্টালে প্রবেশের উপায়:* ফুটারের নিচে ছোট গোপন বাটন অথবা কিবোর্ডে `Ctrl + Shift + A` প্রেস করুন।
-
----
-
 ## 📁 ফোল্ডার স্ট্রাকচার (Folder Structure)
 
 ```
