@@ -7,6 +7,7 @@ import {
 import { Ad, UserProfile } from '../types';
 import { CONDITION_LABELS } from '../data/categories';
 import { Language, formatPrice, formatNumber } from '../utils/i18n';
+import { handleImageError, getAdImageWithFallback } from '../utils/imageFallback';
 
 interface ProductDetailModalProps {
   ad: Ad | null;
@@ -82,9 +83,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             {/* Primary Large Image */}
             <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
               <img
-                src={ad.images[selectedImageIndex] || ad.images[0]}
+                src={getAdImageWithFallback(ad.images, ad.category_id)}
                 alt={ad.title}
                 referrerPolicy="no-referrer"
+                onError={(e) => handleImageError(e, ad.category_id)}
                 className="w-full h-full object-cover"
               />
               {ad.featured_tier !== 'none' && (
@@ -309,9 +311,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 cursor-pointer transition-all flex gap-3 items-center group"
                 >
                   <img
-                    src={item.images[0]}
+                    src={getAdImageWithFallback(item.images, item.category_id)}
                     alt={item.title}
                     referrerPolicy="no-referrer"
+                    onError={(e) => handleImageError(e, item.category_id)}
                     className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700 shrink-0"
                   />
                   <div className="min-w-0 flex-1">

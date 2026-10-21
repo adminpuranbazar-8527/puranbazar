@@ -20,6 +20,7 @@ import { RevenuePayoutSection } from './RevenuePayoutSection';
 import { UserAnalyticsSection } from './UserAnalyticsSection';
 import { DataBackupVaultSection } from './DataBackupVaultSection';
 import { Language, formatPrice, formatNumber } from '../utils/i18n';
+import { handleImageError, getAdImageWithFallback } from '../utils/imageFallback';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -363,9 +364,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       status: 'active',
       password: newStaffPassword.trim(),
       securityPin: newStaffPin.trim(),
-      avatar: newStaffAvatar.trim() ? newStaffAvatar.trim() : undefined,
+      avatar: newStaffAvatar.trim() || '/images/puranbazar_logo_1790267897787.jpg',
       failedLoginAttempts: 0,
-      createdAt: '০৬ অক্টোবর ২০২৬',
+      createdAt: new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }),
       permissions: ROLE_DEFAULT_PERMISSIONS[newStaffRole],
     };
 
@@ -899,8 +900,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     >
                       <div className="flex gap-3">
                         <img
-                          src={ad.images[0]}
+                          src={getAdImageWithFallback(ad.images, ad.category_id)}
                           alt={ad.title}
+                          onError={(e) => handleImageError(e, ad.category_id)}
                           className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700 shrink-0"
                         />
                         <div>
@@ -1000,7 +1002,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 text-xs"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <img src={ad.images[0]} alt={ad.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                      <img 
+                        src={getAdImageWithFallback(ad.images, ad.category_id)} 
+                        alt={ad.title} 
+                        onError={(e) => handleImageError(e, ad.category_id)}
+                        className="w-12 h-12 rounded-lg object-cover shrink-0" 
+                      />
                       <div className="min-w-0">
                         <div className="font-bold text-slate-900 dark:text-white truncate">{ad.title}</div>
                         <div className="text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">

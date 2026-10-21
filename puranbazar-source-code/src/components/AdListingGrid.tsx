@@ -7,6 +7,7 @@ import { Ad, Condition } from '../types';
 import { CATEGORIES, CONDITION_LABELS } from '../data/categories';
 import { BANGLADESH_LOCATIONS } from '../data/bangladeshLocations';
 import { Language, TRANSLATIONS, formatPrice, formatNumber } from '../utils/i18n';
+import { handleImageError, getAdImageWithFallback } from '../utils/imageFallback';
 
 interface AdListingGridProps {
   ads: Ad[];
@@ -357,9 +358,10 @@ export const AdListingGrid: React.FC<AdListingGridProps> = ({
                     {/* 4:3 Image */}
                     <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <img
-                        src={ad.images[0]}
+                        src={getAdImageWithFallback(ad.images, ad.category_id)}
                         alt={ad.title}
                         referrerPolicy="no-referrer"
+                        onError={(e) => handleImageError(e, ad.category_id)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       {/* Badges on Image */}

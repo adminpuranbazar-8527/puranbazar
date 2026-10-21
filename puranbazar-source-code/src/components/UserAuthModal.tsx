@@ -59,11 +59,10 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
     placeholderPassword: isEn ? 'Enter your password' : 'আপনার পাসওয়ার্ড লিখুন',
     forgotPasswordLink: isEn ? 'Forgot Password?' : 'পাসওয়ার্ড ভুলে গেছেন?',
     btnSubmitLogin: isEn ? 'Log In & Continue' : 'লগইন করুন ও এগিয়ে যান',
-    demoAccountsTitle: isEn ? 'One-Click Demo Test Accounts:' : 'টেস্ট করার জন্য ওয়ান-ক্লিক ডেমো একাউন্ট:',
 
     // Register
     labelFullName: isEn ? 'Full Name' : 'আপনার পূর্ণ নাম',
-    placeholderFullName: isEn ? 'e.g. Shahidul Islam' : 'যেমন: শাহিদুল ইসলাম',
+    placeholderFullName: isEn ? 'Enter your full name' : 'আপনার পূর্ণ নাম লিখুন',
     labelPhone: isEn ? 'Mobile Number' : 'মোবাইল নম্বর',
     placeholderPhone: isEn ? '017xxxxxxxx' : '017xxxxxxxx',
     labelEmail: isEn ? 'Email Address' : 'ইমেইল এড্রেস',
@@ -341,17 +340,6 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
       onLoginSuccess(newUser);
       onClose();
     }, 500);
-  };
-
-  // Quick Demo Login helper
-  const handleQuickDemoLogin = (demoUser: UserProfile) => {
-    setLoginIdentifier(demoUser.phone);
-    setLoginPassword(demoUser.password);
-    setSuccessMessage(t.msgLoginSuccess(demoUser.name));
-    setTimeout(() => {
-      onLoginSuccess(demoUser);
-      onClose();
-    }, 400);
   };
 
   // ----------------------------------------------------
@@ -710,32 +698,6 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
                 <LogIn className="w-4 h-4" />
                 <span>{t.btnSubmitLogin}</span>
               </button>
-
-              {/* Quick Demo Test Buttons */}
-              {registeredUsers.length > 0 && (
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block mb-2">
-                    {t.demoAccountsTitle}
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {registeredUsers.slice(0, 2).map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => handleQuickDemoLogin(user)}
-                        className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-slate-700 hover:border-emerald-300 text-left transition-colors cursor-pointer"
-                      >
-                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                          {user.name}
-                        </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">
-                          {user.phone}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </form>
           ) : (
             /* Tab 2: REGISTER FORM */

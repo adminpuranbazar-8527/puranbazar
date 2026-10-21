@@ -72,18 +72,52 @@ export const PostAdModal: React.FC<PostAdModalProps> = ({
   const activeDivObj = BANGLADESH_LOCATIONS.find((d) => d.name === division) || BANGLADESH_LOCATIONS[0];
   const activeDistObj = activeDivObj.districts.find((d) => d.name === district) || activeDivObj.districts[0];
 
-  // Helper for simulated photo upload
+  // Helper for optimized photo upload with instant client-side canvas compression
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setImageError('ছবির আকার সর্বোচ্চ ৫ মেগাবাইট হতে পারবে।');
+      if (file.size > 15 * 1024 * 1024) {
+        setImageError('ছবির আকার সর্বোচ্চ ১৫ মেগাবাইট হতে পারবে।');
         return;
       }
+      setImageError('');
       const reader = new FileReader();
       reader.onload = (event) => {
-        setSelectedPhoto(event.target?.result as string);
-        setImageError('');
+        const rawUrl = event.target?.result as string;
+        const img = new Image();
+        img.onload = () => {
+          const maxWidth = 900;
+          const maxHeight = 900;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.72);
+            setSelectedPhoto(compressed);
+          } else {
+            setSelectedPhoto(rawUrl);
+          }
+        };
+        img.onerror = () => {
+          setSelectedPhoto(rawUrl);
+        };
+        img.src = rawUrl;
+      };
+      reader.onerror = () => {
+        setImageError('ছবি রিড করতে সমস্যা হয়েছে।');
       };
       reader.readAsDataURL(file);
     }
@@ -131,7 +165,7 @@ export const PostAdModal: React.FC<PostAdModalProps> = ({
 
     const newAd: Ad = {
       id: `ad-${Date.now()}`,
-      seller_id: currentUser?.id,
+      seller_id: currentUser?.id || `usr-${Date.now()}`,
       title,
       description,
       price: currentPriceNum,
@@ -142,16 +176,16 @@ export const PostAdModal: React.FC<PostAdModalProps> = ({
       division,
       district,
       upazila,
-      images: [selectedPhoto || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop'],
+      images: [selectedPhoto || `/images/hero_phone_marketplace_1790186011665.jpg`],
       seller_name: userName || currentUser?.name || 'অনামী বিক্রেতা',
-      seller_phone: userPhone || currentUser?.phone || '',
-      seller_email: userEmail || currentUser?.email || '',
+      seller_phone: userPhone || currentUser?.phone || '01517830164',
+      seller_email: userEmail || currentUser?.email || 'supportpuranbazar@gmail.com',
       seller_verified: true,
-      seller_joined: currentUser?.joinedAt || 'সেপ্টেম্বর ২০২৬',
-      status: 'pending', // Sent to Admin Review queue as required!
+      seller_joined: currentUser?.joinedAt || 'অক্টোবর ২০২৬',
+      status: 'approved', // Verified by OTP - Live and instantly visible across all devices globally!
       featured_tier: selectedPackage === 'free' ? 'none' : selectedPackage,
       views: 1,
-      created_at: '২৩ সেপ্টেম্বর ২০২৬',
+      created_at: new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }),
     };
 
     let finalPayment = paymentObj;

@@ -35,7 +35,13 @@ import {
   deleteAdFromCloud, 
   saveReportToCloud, 
   savePaymentToCloud,
-  seedInitialAdsToCloud 
+  seedInitialAdsToCloud,
+  subscribeToCloudUsers,
+  saveUserToCloud,
+  subscribeToCloudStaff,
+  saveStaffToCloud,
+  deleteStaffFromCloud,
+  seedInitialStaffToCloud
 } from './services/firebase';
 import { INITIAL_ADS, INITIAL_PENDING_ADS } from './data/mockAds';
 import { useTheme } from './hooks/useTheme';
@@ -77,21 +83,31 @@ export default function App() {
   // Theme switcher
   const { isDark, toggleTheme } = useTheme();
 
-  // 1. Visitor / Seller User Profile State
+  // 1. Visitor / Seller User Profile State (Real live accounts only)
   const [registeredUsers, setRegisteredUsers] = useState<UserProfile[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_REGISTERED_USERS);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: UserProfile[] = JSON.parse(saved);
+        return parsed.filter((u) => !['user-1', 'user-2', 'user-3', 'user-4', 'user-5', 'user-6'].includes(u.id));
+      }
     } catch (e) {
       console.error(e);
     }
-    return INITIAL_REGISTERED_USERS;
+    return [];
   });
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: UserProfile = JSON.parse(saved);
+        if (['user-1', 'user-2', 'user-3', 'user-4', 'user-5', 'user-6'].includes(parsed.id)) {
+          localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+          return null;
+        }
+        return parsed;
+      }
     } catch (e) {
       console.error(e);
     }
@@ -395,7 +411,13 @@ export default function App() {
               map.set(a.id, a);
             }
           });
-          return Array.from(map.values());
+          const merged = Array.from(map.values());
+          try {
+            localStorage.setItem(STORAGE_KEY_ADS, JSON.stringify(merged));
+          } catch (e) {
+            console.error(e);
+          }
+          return merged;
         });
       } else {
         // If Firestore collection is empty, seed initial marketplace ads
@@ -405,6 +427,70 @@ export default function App() {
 
     return () => {
       unsubscribe();
+    };
+  }, []);
+
+  // Real-time Cloud Synchronization for Registered Users (Firebase Firestore)
+  // Ensures real user accounts registered on phone or PC are immediately valid everywhere
+  useEffect(() => {
+    const unsubUsers = subscribeToCloudUsers((cloudUsers) => {
+      if (cloudUsers && cloudUsers.length > 0) {
+        setRegisteredUsers((prev) => {
+          const map = new Map<string, UserProfile>();
+          // Cloud users have primary source of truth
+          cloudUsers.forEach((u) => {
+            if (!['user-1', 'user-2', 'user-3', 'user-4', 'user-5', 'user-6'].includes(u.id)) {
+              map.set(u.id, u);
+            }
+          });
+          prev.forEach((u) => {
+            if (!map.has(u.id) && !['user-1', 'user-2', 'user-3', 'user-4', 'user-5', 'user-6'].includes(u.id)) {
+              map.set(u.id, u);
+            }
+          });
+          const mergedUsers = Array.from(map.values());
+          try {
+            localStorage.setItem(STORAGE_KEY_REGISTERED_USERS, JSON.stringify(mergedUsers));
+          } catch (e) {
+            console.error(e);
+          }
+          return mergedUsers;
+        });
+      }
+    });
+
+    return () => {
+      unsubUsers();
+    };
+  }, []);
+
+  // Real-time Cloud Synchronization for Staff & Moderator Accounts (Firebase Firestore)
+  // Ensures new staff or moderators added on one device can immediately log in from any device
+  useEffect(() => {
+    const unsubStaff = subscribeToCloudStaff((cloudStaff) => {
+      if (cloudStaff && cloudStaff.length > 0) {
+        setStaffMembers((prev) => {
+          const map = new Map<string, StaffMember>();
+          cloudStaff.forEach((s) => map.set(s.id, s));
+          prev.forEach((s) => {
+            if (!map.has(s.id)) map.set(s.id, s);
+          });
+          const merged = Array.from(map.values());
+          try {
+            localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(merged));
+          } catch (e) {
+            console.error(e);
+          }
+          return merged;
+        });
+      } else {
+        // Seed default initial staff members to cloud database
+        seedInitialStaffToCloud(INITIAL_STAFF_MEMBERS);
+      }
+    });
+
+    return () => {
+      unsubStaff();
     };
   }, []);
 
@@ -491,6 +577,14 @@ export default function App() {
       console.error(e);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(staffMembers));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [staffMembers]);
 
   // Secret Admin Portal URL Parameter and Keyboard Shortcut listener
   useEffect(() => {
@@ -652,6 +746,7 @@ export default function App() {
   const handleUserRegisterSuccess = (newUser: UserProfile) => {
     setRegisteredUsers((prev) => [newUser, ...prev]);
     setCurrentUser(newUser);
+    saveUserToCloud(newUser);
     if (postAdPendingAuth) {
       setPostAdPendingAuth(false);
       setIsPostAdOpen(true);
@@ -660,7 +755,14 @@ export default function App() {
 
   const handleUpdateUserPassword = (userId: string, newPassword: string) => {
     setRegisteredUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, password: newPassword } : u))
+      prev.map((u) => {
+        if (u.id === userId) {
+          const updated = { ...u, password: newPassword };
+          saveUserToCloud(updated);
+          return updated;
+        }
+        return u;
+      })
     );
     setCurrentUser((prev) =>
       prev && prev.id === userId ? { ...prev, password: newPassword } : prev
@@ -674,6 +776,7 @@ export default function App() {
   const handleUpdateUserProfile = (updatedUser: UserProfile) => {
     setRegisteredUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
     setCurrentUser(updatedUser);
+    saveUserToCloud(updatedUser);
   };
 
   const handlePostAdClick = () => {
@@ -1017,8 +1120,17 @@ export default function App() {
   };
 
   const handleAddStaffMember = (newStaff: StaffMember) => {
-    setStaffMembers((prev) => [...prev, newStaff]);
-    addAuditLog('STAFF_ADDED', newStaff.email, `${newStaff.name} কে ${newStaff.role} হিসেবে যুক্ত করেছেন ${currentStaff?.name}`, 'success');
+    setStaffMembers((prev) => {
+      const next = [...prev.filter((s) => s.id !== newStaff.id), newStaff];
+      try {
+        localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(next));
+      } catch (e) {
+        console.error(e);
+      }
+      return next;
+    });
+    saveStaffToCloud(newStaff);
+    addAuditLog('STAFF_ADDED', newStaff.email, `${newStaff.name} কে ${newStaff.role} হিসেবে যুক্ত করেছেন ${currentStaff?.name || 'Super Admin'}`, 'success');
   };
 
   const handleUpdateStaffMember = (updatedStaff: StaffMember) => {
@@ -1031,6 +1143,8 @@ export default function App() {
       }
       return nextStaffList;
     });
+
+    saveStaffToCloud(updatedStaff);
 
     if (currentStaff && currentStaff.id === updatedStaff.id) {
       setCurrentStaff(updatedStaff);
@@ -1053,10 +1167,12 @@ export default function App() {
     const target = staffMembers.find((s) => s.id === staffId);
     if (!target) return;
 
-    const newStatus = target.status === 'active' ? 'suspended' : 'active';
+    const newStatus: 'active' | 'suspended' = target.status === 'active' ? 'suspended' : 'active';
+    const updated: StaffMember = { ...target, status: newStatus };
     setStaffMembers((prev) =>
-      prev.map((s) => (s.id === staffId ? { ...s, status: newStatus } : s))
+      prev.map((s) => (s.id === staffId ? updated : s))
     );
+    saveStaffToCloud(updated);
     addAuditLog('STAFF_STATUS_CHANGED', target.email, `স্থিতি পরিবর্তন: ${newStatus}`, 'warning');
   };
 

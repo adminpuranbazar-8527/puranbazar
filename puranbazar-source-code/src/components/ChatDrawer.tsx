@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Send, ShieldCheck, MapPin, CheckCircle2 } from 'lucide-react';
 import { Ad } from '../types';
+import { handleImageError, getAdImageWithFallback } from '../utils/imageFallback';
 
 interface ChatDrawerProps {
   isOpen: boolean;
@@ -97,7 +98,12 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
         {/* Product mini banner */}
         <div className="p-3 bg-slate-100/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <img src={ad.images[0]} alt={ad.title} className="w-12 h-12 rounded-lg object-cover bg-white dark:bg-slate-700 shrink-0" />
+          <img 
+            src={getAdImageWithFallback(ad.images, ad.category_id)} 
+            alt={ad.title} 
+            onError={(e) => handleImageError(e, ad.category_id)}
+            className="w-12 h-12 rounded-lg object-cover bg-white dark:bg-slate-700 shrink-0" 
+          />
           <div className="min-w-0 flex-1">
             <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{ad.title}</div>
             <div className="text-xs font-extrabold text-emerald-700 dark:text-emerald-400 tabular-nums">

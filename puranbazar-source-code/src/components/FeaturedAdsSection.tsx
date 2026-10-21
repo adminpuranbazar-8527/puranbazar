@@ -3,6 +3,7 @@ import { Sparkles, MapPin, Eye, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Ad } from '../types';
 import { CONDITION_LABELS } from '../data/categories';
 import { Language, TRANSLATIONS, formatPrice, formatNumber } from '../utils/i18n';
+import { handleImageError, getAdImageWithFallback } from '../utils/imageFallback';
 
 interface FeaturedAdsSectionProps {
   ads: Ad[];
@@ -68,9 +69,10 @@ export const FeaturedAdsSection: React.FC<FeaturedAdsSectionProps> = ({
             {/* Image Container with 4:3 Aspect Ratio */}
             <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden">
               <img
-                src={ad.images[0]}
+                src={getAdImageWithFallback(ad.images, ad.category_id)}
                 alt={ad.title}
                 referrerPolicy="no-referrer"
+                onError={(e) => handleImageError(e, ad.category_id)}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               {/* Feature Ribbon */}

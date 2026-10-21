@@ -8,7 +8,7 @@ import {
   Ad, UserProfile, FeaturedPayment, AdReport, GoogleAdSenseConfig, 
   SecuritySettings, StaffMember, PayoutAccount, PayoutPolicySettings 
 } from '../types';
-import { saveAdToCloud } from '../services/firebase';
+import { saveAdToCloud, saveStaffToCloud } from '../services/firebase';
 import { Language, formatNumber } from '../utils/i18n';
 
 interface DataBackupVaultSectionProps {
@@ -75,10 +75,15 @@ export const DataBackupVaultSection: React.FC<DataBackupVaultSectionProps> = ({
       for (const ad of ads) {
         await saveAdToCloud(ad);
       }
+      if (staffMembers && staffMembers.length > 0) {
+        for (const staff of staffMembers) {
+          await saveStaffToCloud(staff);
+        }
+      }
       setDownloadSuccess(
         isEn
-          ? 'All ads successfully synced to Firebase Cloud Firestore! Now visible across all devices.'
-          : 'সকল বিজ্ঞাপন সফলভাবে গুগল ক্লাউড ডাটাবেজে সিঙ্ক হয়েছে! এখন মোবাইল, কম্পিউটার বা যেকোনো ডিভাইসে সরাসরি দৃশ্যমান হবে।'
+          ? 'All ads and staff members successfully synced to Firebase Cloud Firestore! Now visible and functional across all devices.'
+          : 'সকল বিজ্ঞাপন এবং কর্মকর্তা সফলভাবে গুগল ক্লাউড ডাটাবেজে সিঙ্ক হয়েছে! এখন মোবাইল, কম্পিউটার বা যেকোনো ডিভাইসে সরাসরি কাজ করবে।'
       );
       setTimeout(() => setDownloadSuccess(null), 5000);
     } catch (err: any) {

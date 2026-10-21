@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Ad, FeaturedPayment, UserProfile } from '../types';
 import { PaymentGatewayModal } from './PaymentGatewayModal';
+import { handleImageError, getAdImageWithFallback } from '../utils/imageFallback';
 
 interface BoostAdModalProps {
   isOpen: boolean;
@@ -124,8 +125,9 @@ export const BoostAdModal: React.FC<BoostAdModalProps> = ({
             {/* Target Ad Info Card */}
             <div className="mt-4 p-3 rounded-2xl bg-black/20 backdrop-blur-md border border-white/20 flex items-center gap-3">
               <img
-                src={ad.images[0]}
+                src={getAdImageWithFallback(ad.images, ad.category_id)}
                 alt={ad.title}
+                onError={(e) => handleImageError(e, ad.category_id)}
                 className="w-12 h-12 rounded-xl object-cover border border-white/30 shrink-0"
               />
               <div className="min-w-0 flex-1">

@@ -10,6 +10,7 @@ import { BANGLADESH_LOCATIONS } from '../data/bangladeshLocations';
 import { sanitizeInput } from '../utils/security';
 import { normalizePhone } from '../utils/userAuth';
 import { Language, formatPrice, formatNumber } from '../utils/i18n';
+import { handleImageError, getAdImageWithFallback } from '../utils/imageFallback';
 
 const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop',
@@ -376,8 +377,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     >
                       <div className="flex items-center gap-3">
                         <img
-                          src={ad.images[0]}
+                          src={getAdImageWithFallback(ad.images, ad.category_id)}
                           alt={ad.title}
+                          onError={(e) => handleImageError(e, ad.category_id)}
                           className="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                         />
                         <div>
